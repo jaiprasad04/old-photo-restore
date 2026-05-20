@@ -20,7 +20,7 @@ Old Photo Restore is a production-ready, highly-optimized AI web application. Ou
 - **Responsive & Constrained UX** — Layout height constraints prevent page overflow, creating an elegant webapp interface that scrolls properly on both desktop and mobile.
 - **Extensible API** — Easily swap or adapt underlying model features without breaking layout styling.
 
-![Old Photo Restore Studio](https://cdn.muapi.ai/data/2/240218598562/Screenshot_2026-05-20_194450.png)
+![Old Photo Restore Studio](https://cdn.muapi.ai/data/2/570731212633/Screenshot_2026-05-20_192138.png)
 
 ## ✨ Core Features
 
