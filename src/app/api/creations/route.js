@@ -28,7 +28,26 @@ export async function GET(req) {
       orderBy: { createdAt: "desc" }
     });
 
-    return NextResponse.json(restorations);
+    // Automatically check and update status of any creations that are still processing
+    const updatedRestorations = await Promise.all(
+      restorations.map(async (r) => {
+        if (r.status === "processing" && r.requestId) {
+          try {
+            await AIService.checkStatus(r.requestId, session.user.id);
+            const refetched = await prisma.photoRestoration.findUnique({
+              where: { id: r.id }
+            });
+            return refetched || r;
+          } catch (e) {
+            console.error(`Error updating status for creation ${r.id}:`, e);
+            return r;
+          }
+        }
+        return r;
+      })
+    );
+
+    return NextResponse.json(updatedRestorations);
   } catch (error) {
     console.error("[RESTORATIONS_GET_ERROR]", error);
     return new NextResponse("Internal Error", { status: 500 });
@@ -74,5 +93,38 @@ export async function POST(req) {
   } catch (error) {
     console.error("[RESTORATIONS_POST_ERROR]", error);
     return new NextResponse(error.message || "Internal Error", { status: 500 });
+  }
+}
+
+export async function DELETE(req) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return new NextResponse("Missing restoration ID", { status: 400 });
+    }
+
+    const restoration = await prisma.photoRestoration.findFirst({
+      where: { id, userId: session.user.id }
+    });
+
+    if (!restoration) {
+      return new NextResponse("Not Found", { status: 404 });
+    }
+
+    await prisma.photoRestoration.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[RESTORATIONS_DELETE_ERROR]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
